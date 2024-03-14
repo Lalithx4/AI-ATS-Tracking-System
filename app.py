@@ -5,10 +5,9 @@ import base64
 import google.generativeai as genai 
 from dotenv import load_dotenv
 from PIL import Image
-import pdf2image
+import PyPDF2
 from streamlit_lottie import st_lottie
 import json
-
 
 load_dotenv()
 
@@ -24,34 +23,18 @@ st.header("AI Powered Resume Tracking System")
 input_text = st.text_area("Job Description:", key="input")
 uploaded_file = st.file_uploader("Upload the resume PDF", type = ["pdf"],help="Please upload the resume in PDF format")
 
-
-
 def input_pdf_setup(uploaded_file):
-    try:
-        if uploaded_file is not None:
-            images = pdf2image.convert_from_bytes(uploaded_file.read())
-            first_page = images[0]
-
-            img_byte_arr = io.BytesIO()
-            first_page.save(img_byte_arr, format='JPEG')
-            img_byte_arr = img_byte_arr.getvalue()
-
-            pdf_parts = [
-                    {
-                        "mime_type": "image/jpeg",
-                        "data": base64.b64encode(img_byte_arr).decode()  # encode to base64
-                    }
-                ]
-            return pdf_parts
-    except pdf2image.exceptions.PDFInfoNotInstalledError:
-        st.error("Unable to get page count. Please make sure Poppler is installed and added to the system PATH.")
-        st.stop()
-    else:
-        raise FileNotFoundError("No file uploaded")
+    if uploaded_file is not None:
+        reader = PyPDF2.PdfReader(uploaded_file)
+        text = ""
+        for page in range(len(reader.pages)):
+            page = reader.pages[page]
+            text += str(page.extract_text())
+        return text
 
 def get_gemini_response(input, pdf_content, prompt):
-    model = genai.GenerativeModel("gemini-pro-vision")
-    response = model.generate_content([input,pdf_content[0],prompt])
+    model = genai.GenerativeModel("gemini-pro")
+    response = model.generate_content([input, pdf_content, prompt])
     return response.text
 
 # Input prompts
@@ -78,8 +61,6 @@ As a Match Percentage Calculator, your role is crucial in determining the candid
 Please upload both the job description and the candidate's resume.
 Leverage your expertise to calculate the percentage match between the required skills and the candidate's qualifications, providing a quantitative assessment.
 """
-
-
 
 if uploaded_file is not None:
     st.write("PDF uploaded successfully")
@@ -109,13 +90,7 @@ if st.button("Submit"):
     else:
         st.write("Please upload the resume")
 
-
-
-
 # Add a sidebar
 st.sidebar.header('VEctorDB coming soon')
-
-
-
 
 st.markdown("&#169; 2024 Lalith ")
