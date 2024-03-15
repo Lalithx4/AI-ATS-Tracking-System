@@ -93,4 +93,19 @@ if st.button("Submit"):
 # Add a sidebar
 st.sidebar.header('VEctorDB coming soon')
 
+import base64
+
+def get_image_data_url(img_path):
+    with open(img_path, "rb") as img_file:
+        return "data:image/png;base64," + base64.b64encode(img_file.read()).decode()
+
+img_data_url = get_image_data_url("./assets/geminiimg.png")
+htt = f"""
+<p>
+    <span> Built With: </span>
+    <img src="{img_data_url}" width="200" alt="500">
+</p>
+"""
+st.markdown(htt, unsafe_allow_html=True)
+
 st.markdown("&#169; 2024 Lalith ")
